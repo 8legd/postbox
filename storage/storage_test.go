@@ -2,6 +2,7 @@ package storage
 
 import (
   "testing"
+  "io"
   "os"
   "bufio"
   "errors"
@@ -45,12 +46,22 @@ func removeTestFile(t *testing.T, path string) {
   }
 }
 
-func TestSetupFileSystem(t *testing.T) {
+
+func TestSetupStdoutWriter(t *testing.T) {
+  w, _ := SetupStdoutWriter()
+  _, err := io.WriteString(w,"")
+  if (err != nil) {
+    t.Error(err)
+  }
+}
+
+func TestSetupFileSystemWriter(t *testing.T) {
 
   dir := "postbox"
+  prefix := "postbox"
 
   // Test succesful creation
-  err := SetupFileSystem(dir)
+  _, err := SetupFileSystemWriter(dir,prefix)
   if (err != nil) {
       t.Error(err)
   }
@@ -59,7 +70,7 @@ func TestSetupFileSystem(t *testing.T) {
   checkDirExists(t,dir)
 
   // Test re-run of SetupFileSystem
-  err = SetupFileSystem(dir)
+  _, err = SetupFileSystemWriter(dir,prefix)
   if (err != nil) {
     t.Error(err)
   }
@@ -74,7 +85,7 @@ func TestSetupFileSystem(t *testing.T) {
   createTestFile(t,dir)
 
   // Check this returns an appropriate error
-  err = SetupFileSystem(dir)
+  _, err = SetupFileSystemWriter(dir,prefix)
   if err != nil {
     if !strings.Contains(err.Error(),"exists but is not a directory") {
       t.Error(err)
@@ -85,4 +96,10 @@ func TestSetupFileSystem(t *testing.T) {
 
   // Tidy up (remove file)
   os.Remove(dir)
+
+
+  // Finally try and actually write to the file system!
+
+
+
 }
