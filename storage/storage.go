@@ -55,8 +55,8 @@ func (fss *FileSystemStore) Read(id string) (content string, err error) {
 }
 
 
-// SetupFileSystemWriter checks the specified directory exists and if not tries to create it.
-// It returns a FileSystem Store which will write to temp files in the specified directory.
+// SetupFileSystem checks the specified directory exists and if not tries to create it.
+// It returns a FileSystem Store which will read/write to temp files in the specified directory.
 func SetupFileSystem(dir string) (Store, error) {
   fi, err := os.Stat(dir)
   if err != nil && os.IsNotExist(err) {
