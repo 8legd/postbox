@@ -2,11 +2,11 @@ package storage
 
 import (
   "testing"
-  "io"
   "os"
   "bufio"
   "errors"
   "strings"
+  "strconv"
 )
 
 func checkDirExists(t *testing.T, dir string) {
@@ -47,35 +47,26 @@ func removeTestFile(t *testing.T, path string) {
 }
 
 
-func TestSetupStdoutWriter(t *testing.T) {
-  w, _ := SetupStdoutWriter()
-  _, err := io.WriteString(w,"")
-  if (err != nil) {
-    t.Error(err)
-  }
-}
-
-func TestSetupFileSystemWriter(t *testing.T) {
+func TestSetupFileSystem(t *testing.T) {
 
   dir := "postbox"
-  prefix := "postbox"
 
   // Test succesful creation
-  _, err := SetupFileSystemWriter(dir,prefix)
+  fs, err := SetupFileSystem(dir)
   if (err != nil) {
       t.Error(err)
   }
 
-  // Check exist
+  // Check exists
   checkDirExists(t,dir)
 
   // Test re-run of SetupFileSystem
-  _, err = SetupFileSystemWriter(dir,prefix)
+  fs, err = SetupFileSystem(dir)
   if (err != nil) {
     t.Error(err)
   }
 
-  // Check still exist!
+  // Check still exists!
   checkDirExists(t,dir)
 
   // Tidy up (remove dir)
@@ -85,7 +76,7 @@ func TestSetupFileSystemWriter(t *testing.T) {
   createTestFile(t,dir)
 
   // Check this returns an appropriate error
-  _, err = SetupFileSystemWriter(dir,prefix)
+  fs, err = SetupFileSystem(dir)
   if err != nil {
     if !strings.Contains(err.Error(),"exists but is not a directory") {
       t.Error(err)
@@ -95,11 +86,48 @@ func TestSetupFileSystemWriter(t *testing.T) {
   }
 
   // Tidy up (remove file)
-  os.Remove(dir)
+  err = os.Remove(dir)
+  if (err != nil) {
+    t.Error(err)
+  }
 
+  // Finally try and actually write to the store!
+  fs, err = SetupFileSystem(dir)
+  if (err != nil) {
+    t.Error(err)
+  }
+  _, err = fs.Write("testing 1")
+  if (err != nil) {
+    t.Error(err)
+  }
+  _, err = fs.Write("testing 2")
+  if (err != nil) {
+    t.Error(err)
+  }
+  _, err = fs.Write("testing 3")
+  if (err != nil) {
+    t.Error(err)
+  }
 
-  // Finally try and actually write to the file system!
+  ids, err := fs.List()
+  if (err != nil) {
+    t.Error(err)
+  }
+  for i, v := range ids {
+    content, err := fs.Read(v)
+    if (err != nil) {
+      t.Error(err)
+    } else {
+      if content != ("testing " + strconv.Itoa(i+1)) {
+        t.Error("read content does not match written content for id:" + v)
+      }
+    }
+  }
 
-
+  // Tidy up (remove dir and contents)
+  err = os.RemoveAll(dir)
+  if (err != nil) {
+    t.Error(err)
+  }
 
 }
